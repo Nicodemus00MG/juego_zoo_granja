@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐷 Granja de Números 1-10 🐄</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', cursive;
+            background: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
+            min-height: 100vh;
+            overflow-x: auto;
+        }
+
+        .game-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #2E8B57;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .level-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .level-btn {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            color: white;
+            border: none;
+            padding: 12px 8px;
+            font-size: 1.4em;
+            font-weight: bold;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .level-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .level-btn.active {
+            background: linear-gradient(45deg, #27AE60, #3498DB);
+            transform: scale(1.1);
+        }
+
+        .level-btn.completed {
+            background: linear-gradient(45deg, #F39C12, #E67E22);
+            position: relative;
+        }
+
+        .level-btn.completed::after {
+            content: '⭐';
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 1.2em;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #27AE60, #2ECC71);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .game-area {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .animals-pool {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .animals-pool h2 {
+            color: #2C3E50;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .animals-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            gap: 10px;
+            min-height: 300px;
+            padding: 15px;
+            border: 3px dashed #BDC3C7;
+            border-radius: 15px;
+            background: #ECF0F1;
+        }
+
+        .animal {
+            width: 65px;
+            height: 65px;
+            cursor: grab;
+            transition: all 0.3s ease;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2em;
+            background: rgba(255, 255, 255, 0.9);
+            border: 3px solid #E67E22;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        .animal:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .animal.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg) scale(1.1);
+            cursor: grabbing;
+        }
+
+        .corrals-area {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .corral {
+            background: rgba(255, 255, 255, 0.9);
+            border: 4px solid #8B4513;
+            border-radius: 20px;
+            padding: 15px;
+            min-height: 200px;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .corral.drag-over {
+            border-color: #27AE60;
+            background: rgba(46, 204, 113, 0.1);
+            transform: scale(1.02);
+        }
+
+        .corral-header {
+            text-align: center;
+            margin-bottom: 10px;
+            background: #8B4513;
+            color: white;
+            padding: 8px;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: bold;
+        }
+
+        .counter {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            background: #E74C3C;
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6em;
+            font-weight: bold;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+        }
+
+        .counter.correct {
+            background: #27AE60;
+            animation: pulse 0.5s ease;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+
+        .corral-animals {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+            gap: 5px;
+            margin-top: 15px;
+        }
+
+        .success-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, #27AE60, #2ECC71);
+            color: white;
+            padding: 30px 50px;
+            border-radius: 20px;
+            font-size: 2em;
+            font-weight: bold;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: none;
+            text-align: center;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .control-btn {
+            background: #3498DB;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 1.1em;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: #2980B9;
+            transform: translateY(-2px);
+        }
+
+        .control-btn.reset {
+            background: #E67E22;
+        }
+
+        .control-btn.reset:hover {
+            background: #D35400;
+        }
+
+        .instructions {
+            background: rgba(52, 152, 219, 0.1);
+            border: 2px solid #3498DB;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+            font-size: 1.1em;
+            color: #2C3E50;
+        }
+
+        .level-info {
+            background: rgba(241, 196, 15, 0.1);
+            border: 2px solid #F1C40F;
+            border-radius: 15px;
+            padding: 10px;
+            margin: 10px 0;
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #D68910;
+        }
+
+        @media (max-width: 768px) {
+            .game-area {
+                grid-template-columns: 1fr;
+            }
+            
+            .level-selector {
+                grid-template-columns: repeat(5, 1fr);
+            }
+            
+            .corrals-area {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .controls {
+                justify-content: center;
+            }
+        }
+
+        .fireworks {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        .firework {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: firework 1s ease-out forwards;
+        }
+
+        @keyframes firework {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>🐷 Granja de Números 1-10 🐄</h1>
+            <div class="instructions">
+                ¡Completa todos los niveles! Arrastra los animales correctos a sus corrales 🎯
+            </div>
+            
+            <div class="level-info" id="levelInfo">
+                Nivel 1: Aprende el número 1 con 🐷 Cerditos
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            
+            <div class="level-selector" id="levelSelector"></div>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn" onclick="previousLevel()">⬅️ Anterior</button>
+            <button class="control-btn" onclick="nextLevel()">Siguiente ➡️</button>
+            <button class="control-btn" onclick="showHint()">💡 Pista</button>
+            <button class="control-btn reset" onclick="resetGame()">🔄 Reiniciar</button>
+        </div>
+
+        <div class="game-area">
+            <div class="animals-pool">
+                <h2>🚜 Animales de la Granja</h2>
+                <div class="animals-container" id="animalsContainer"></div>
+            </div>
+
+            <div class="corrals-area" id="corralsArea"></div>
+        </div>
+    </div>
+
+    <div class="success-message" id="successMessage">
+        🎉 ¡Excelente! ¡Has completado el nivel! 🎉
+    </div>
+
+    <div class="fireworks" id="fireworks"></div>
+
+    <script>
+        let currentLevel = 1;
+        let completedLevels = JSON.parse(localStorage.getItem('completedLevels') || '[]');
+        let gameComplete = false;
+        
+        const animals = {
+            pig: '🐷',
+            cow: '🐄', 
+            sheep: '🐑',
+            chicken: '🐔',
+            horse: '🐴',
+            duck: '🦆',
+            rabbit: '🐰',
+            dog: '🐕',
+            cat: '🐱',
+            rooster: '🐓',
+            hen: '🐓',
+            mouse: '🐭',
+            goat: '🐐'
+        };
+
+        const levelConfigs = {
+            1: { animals: ['pig'], names: ['🐷 Cerditos'], description: 'Aprende el número 1 con Cerditos' },
+            2: { animals: ['cow', 'sheep'], names: ['🐄 Vacas', '🐑 Ovejas'], description: 'Cuenta hasta 2 con Vacas y Ovejas' },
+            3: { animals: ['chicken', 'duck', 'rabbit'], names: ['🐔 Pollitos', '🦆 Patos', '🐰 Conejos'], description: 'Practica el 3 con Pollitos, Patos y Conejos' },
+            4: { animals: ['horse', 'dog', 'cat', 'pig'], names: ['🐴 Caballos', '🐕 Perros', '🐱 Gatos', '🐷 Cerditos'], description: 'Domina el 4 con cuatro tipos de animales' },
+            5: { animals: ['rooster', 'hen', 'mouse', 'goat', 'cow'], names: ['🐓 Gallos', '🐓 Gallinas', '🐭 Ratones', '🐐 Cabras', '🐄 Vacas'], description: 'Desafío del 5 con Gallos, Gallinas, Ratones, Cabras y Vacas' },
+            6: { animals: ['pig', 'sheep', 'chicken', 'rabbit', 'horse', 'duck'], names: ['🐷 Cerditos', '🐑 Ovejas', '🐔 Pollitos', '🐰 Conejos', '🐴 Caballos', '🦆 Patos'], description: 'Cuenta 6 con una gran variedad de animales' },
+            7: { animals: ['dog', 'cat', 'rooster', 'mouse', 'goat', 'cow', 'pig'], names: ['🐕 Perros', '🐱 Gatos', '🐓 Gallos', '🐭 Ratones', '🐐 Cabras', '🐄 Vacas', '🐷 Cerditos'], description: 'Nivel 7: ¡Siete corrales diferentes!' },
+            8: { animals: ['pig', 'cow', 'sheep', 'chicken', 'horse', 'duck', 'rabbit', 'dog'], names: ['🐷 Cerditos', '🐄 Vacas', '🐑 Ovejas', '🐔 Pollitos', '🐴 Caballos', '🦆 Patos', '🐰 Conejos', '🐕 Perros'], description: 'Desafío del 8: ¡Ocho tipos de animales!' },
+            9: { animals: ['cat', 'rooster', 'hen', 'mouse', 'goat', 'pig', 'cow', 'sheep', 'chicken'], names: ['🐱 Gatos', '🐓 Gallos', '🐓 Gallinas', '🐭 Ratones', '🐐 Cabras', '🐷 Cerditos', '🐄 Vacas', '🐑 Ovejas', '🐔 Pollitos'], description: 'Casi al final: ¡Cuenta hasta 9!' },
+            10: { animals: ['pig', 'cow', 'sheep', 'chicken', 'horse', 'duck', 'rabbit', 'dog', 'cat', 'goat'], names: ['🐷 Cerditos', '🐄 Vacas', '🐑 Ovejas', '🐔 Pollitos', '🐴 Caballos', '🦆 Patos', '🐰 Conejos', '🐕 Perros', '🐱 Gatos', '🐐 Cabras'], description: '¡NIVEL FINAL! ¡Cuenta hasta 10 con todos los animales!' }
+        };
+
+        function initializeLevelSelector() {
+            const selector = document.getElementById('levelSelector');
+            selector.innerHTML = '';
+            
+            for (let i = 1; i <= 10; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'level-btn';
+                btn.textContent = i;
+                btn.onclick = () => setLevel(i);
+                
+                if (i === currentLevel) {
+                    btn.classList.add('active');
+                }
+                
+                if (completedLevels.includes(i)) {
+                    btn.classList.add('completed');
+                }
+                
+                selector.appendChild(btn);
+            }
+        }
+
+        function setLevel(level) {
+            if (level < 1 || level > 10) return;
+            
+            currentLevel = level;
+            gameComplete = false;
+            
+            updateLevelInfo();
+            updateProgress();
+            initializeLevelSelector();
+            resetGame();
+        }
+
+        function updateLevelInfo() {
+            const info = document.getElementById('levelInfo');
+            const config = levelConfigs[currentLevel];
+            info.textContent = `Nivel ${currentLevel}: ${config.description}`;
+        }
+
+        function updateProgress() {
+            const progressFill = document.getElementById('progressFill');
+            const progress = (completedLevels.length / 10) * 100;
+            progressFill.style.width = progress + '%';
+        }
+
+        function createCorral(animalType, animalName, targetCount) {
+            const corral = document.createElement('div');
+            corral.className = 'corral';
+            corral.dataset.animal = animalType;
+            corral.dataset.target = targetCount;
+            
+            corral.innerHTML = `
+                <div class="corral-header">${animalName} (${targetCount})</div>
+                <div class="counter" id="${animalType}Counter">0</div>
+                <div class="corral-animals" id="${animalType}Corral"></div>
+            `;
+            
+            return corral;
+        }
+
+        function generateCorrals() {
+            const corralsArea = document.getElementById('corralsArea');
+            corralsArea.innerHTML = '';
+            
+            const config = levelConfigs[currentLevel];
+            
+            config.animals.forEach((animalType, index) => {
+                const corral = createCorral(animalType, config.names[index], currentLevel);
+                corralsArea.appendChild(corral);
+            });
+        }
+
+        function createAnimal(type, id) {
+            const animal = document.createElement('div');
+            animal.className = 'animal';
+            animal.draggable = true;
+            animal.dataset.type = type;
+            animal.dataset.id = id;
+            animal.textContent = animals[type];
+            
+            // Drag events
+            animal.addEventListener('dragstart', handleDragStart);
+            animal.addEventListener('dragend', handleDragEnd);
+            
+            // Touch events for mobile
+            animal.addEventListener('touchstart', handleTouchStart);
+            animal.addEventListener('touchmove', handleTouchMove);
+            animal.addEventListener('touchend', handleTouchEnd);
+            
+            return animal;
+        }
+
+        function generateAnimals() {
+            const container = document.getElementById('animalsContainer');
+            container.innerHTML = '';
+            
+            const config = levelConfigs[currentLevel];
+            const totalNeeded = config.animals.length * currentLevel;
+            
+            // Create exact animals needed
+            config.animals.forEach(animalType => {
+                for (let i = 0; i < currentLevel; i++) {
+                    container.appendChild(createAnimal(animalType, `${animalType}-${i}`));
+                }
+            });
+            
+            // Add some extra random animals for challenge (but not too many for lower levels)
+            const extraAnimalsCount = Math.min(currentLevel, 5);
+            const allAnimalTypes = Object.keys(animals);
+            
+            for (let i = 0; i < extraAnimalsCount; i++) {
+                const randomType = allAnimalTypes[Math.floor(Math.random() * allAnimalTypes.length)];
+                container.appendChild(createAnimal(randomType, `extra-${randomType}-${i}`));
+            }
+            
+            shuffleAnimals();
+        }
+
+        function shuffleAnimals() {
+            const container = document.getElementById('animalsContainer');
+            const animals = Array.from(container.children);
+            
+            // Fisher-Yates shuffle
+            for (let i = animals.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                container.appendChild(animals[j]);
+            }
+        }
+
+        let draggedElement = null;
+        let touchOffset = { x: 0, y: 0 };
+
+        function handleDragStart(e) {
+            draggedElement = e.target;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            playSound('pickup');
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            draggedElement = null;
+        }
+
+        function handleTouchStart(e) {
+            e.preventDefault();
+            draggedElement = e.target;
+            const touch = e.touches[0];
+            const rect = e.target.getBoundingClientRect();
+            touchOffset.x = touch.clientX - rect.left;
+            touchOffset.y = touch.clientY - rect.top;
+            e.target.classList.add('dragging');
+            e.target.style.position = 'fixed';
+            e.target.style.zIndex = '1000';
+            playSound('pickup');
+        }
+
+        function handleTouchMove(e) {
+            if (!draggedElement) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            draggedElement.style.left = (touch.clientX - touchOffset.x) + 'px';
+            draggedElement.style.top = (touch.clientY - touchOffset.y) + 'px';
+        }
+
+        function handleTouchEnd(e) {
+            if (!draggedElement) return;
+            e.preventDefault();
+            
+            const touch = e.changedTouches[0];
+            const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+            const corral = elementBelow ? elementBelow.closest('.corral') : null;
+            
+            draggedElement.style.position = '';
+            draggedElement.style.zIndex = '';
+            draggedElement.style.left = '';
+            draggedElement.style.top = '';
+            draggedElement.classList.remove('dragging');
+            
+            if (corral) {
+                moveAnimalToCorral(draggedElement, corral);
+            }
+            
+            draggedElement = null;
+        }
+
+        function setupDropZones() {
+            document.addEventListener('dragover', handleDragOver);
+            document.addEventListener('drop', handleDrop);
+            document.addEventListener('dragenter', handleDragEnter);
+            document.addEventListener('dragleave', handleDragLeave);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleDragEnter(e) {
+            const corral = e.target.closest('.corral');
+            if (corral) {
+                corral.classList.add('drag-over');
+            }
+        }
+
+        function handleDragLeave(e) {
+            const corral = e.target.closest('.corral');
+            if (corral && !corral.contains(e.relatedTarget)) {
+                corral.classList.remove('drag-over');
+            }
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const corral = e.target.closest('.corral');
+            if (corral) {
+                corral.classList.remove('drag-over');
+                if (draggedElement) {
+                    moveAnimalToCorral(draggedElement, corral);
+                }
+            }
+        }
+
+        function moveAnimalToCorral(animal, corral) {
+            const animalType = animal.dataset.type;
+            const corralType = corral.dataset.animal;
+            
+            if (animalType === corralType) {
+                const corralAnimals = corral.querySelector('.corral-animals');
+                const currentCount = corralAnimals.children.length;
+                const targetCount = parseInt(corral.dataset.target);
+                
+                if (currentCount < targetCount) {
+                    const newAnimal = animal.cloneNode(true);
+                    newAnimal.draggable = false;
+                    newAnimal.style.cursor = 'pointer';
+                    newAnimal.onclick = () => returnAnimalToPool(newAnimal);
+                    
+                    corralAnimals.appendChild(newAnimal);
+                    animal.remove();
+                    
+                    updateCounter(corral);
+                    playSound('success');
+                    
+                    checkLevelComplete();
+                } else {
+                    playSound('error');
+                    showMessage('¡Este corral ya está lleno!');
+                }
+            } else {
+                playSound('error');
+                showMessage(`¡Los ${animals[animalType]} no van con los ${animals[corralType]}!`);
+            }
+        }
+
+        function returnAnimalToPool(corralAnimal) {
+            const animalsContainer = document.getElementById('animalsContainer');
+            const newAnimal = createAnimal(
+                corralAnimal.dataset.type, 
+                corralAnimal.dataset.id
+            );
+            
+            animalsContainer.appendChild(newAnimal);
+            corralAnimal.remove();
+            
+            const corral = corralAnimal.closest('.corral');
+            updateCounter(corral);
+            playSound('pickup');
+        }
+
+        function updateCounter(corral) {
+            const counter = corral.querySelector('.counter');
+            const count = corral.querySelector('.corral-animals').children.length;
+            const target = parseInt(corral.dataset.target);
+            
+            counter.textContent = count;
+            
+            if (count === target) {
+                counter.classList.add('correct');
+                playSound('level-complete');
+                setTimeout(() => counter.classList.remove('correct'), 500);
+            }
+        }
+
+        function checkLevelComplete() {
+            const corrals = document.querySelectorAll('.corral');
+            let allComplete = true;
+            
+            corrals.forEach(corral => {
+                const count = corral.querySelector('.corral-animals').children.length;
+                const target = parseInt(corral.dataset.target);
+                if (count !== target) {
+                    allComplete = false;
+                }
+            });
+            
+            if (allComplete && !gameComplete) {
+                gameComplete = true;
+                completeLevel();
+            }
+        }
+
+        function completeLevel() {
+            if (!completedLevels.includes(currentLevel)) {
+                completedLevels.push(currentLevel);
+                localStorage.setItem('completedLevels', JSON.stringify(completedLevels));
+            }
+            
+            showSuccessMessage();
+            createFireworks();
+            updateProgress();
+            initializeLevelSelector();
+            
+            // Auto advance to next level after celebration
+            setTimeout(() => {
+                if (currentLevel < 10) {
+                    nextLevel();
+                } else {
+                    showFinalCelebration();
+                }
+            }, 3000);
+        }
+
+        function showSuccessMessage() {
+            const message = document.getElementById('successMessage');
+            
+            if (currentLevel === 10) {
+                message.innerHTML = '🎊 ¡FELICITACIONES! ¡COMPLETASTE TODOS LOS NIVELES! 🎊';
+            } else {
+                message.innerHTML = `🎉 ¡Excelente! ¡Nivel ${currentLevel} completado! 🎉`;
+            }
+            
+            message.style.display = 'block';
+            playSound('victory');
+            
+            setTimeout(() => {
+                message.style.display = 'none';
+                gameComplete = false;
+            }, 3000);
+        }
+
+        function showFinalCelebration() {
+            const message = document.getElementById('successMessage');
+            message.innerHTML = '🏆 ¡ERES UN MAESTRO DE LOS NÚMEROS! 🏆<br>¡Has completado toda la granja!';
+            message.style.display = 'block';
+            
+            // Extended fireworks
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => createFireworks(), i * 500);
+            }
+        }
+
+        function createFireworks() {
+            const fireworksContainer = document.getElementById('fireworks');
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8'];
+            
+            for (let i = 0; i < 15; i++) {
+                const firework = document.createElement('div');
+                firework.className = 'firework';
+                firework.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                firework.style.left = Math.random() * 100 + '%';
+                firework.style.top = Math.random() * 100 + '%';
+                
+                fireworksContainer.appendChild(firework);
+                
+                setTimeout(() => {
+                    if (firework.parentNode) {
+                        firework.parentNode.removeChild(firework);
+                    }
+                }, 1000);
+            }
+        }
+
+        function nextLevel() {
+            if (currentLevel < 10) {
+                setLevel(currentLevel + 1);
+            }
+        }
+
+        function previousLevel() {
+            if (currentLevel > 1) {
+                setLevel(currentLevel - 1);
+            }
+        }
+
+        function showHint() {
+            const config = levelConfigs[currentLevel];
+            const neededAnimals = config.names.join(', ');
+            showMessage(`💡 Necesitas ${currentLevel} de cada tipo: ${neededAnimals}`);
+        }
+
+        function showMessage(text) {
+            const tempMessage = document.createElement('div');
+            tempMessage.textContent = text;
+            tempMessage.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.9);
+                color: white;
+                padding: 15px 30px;
+                border-radius: 10px;
+                font-size: 1.2em;
+                z-index: 1001;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                text-align: center;
+                max-width: 80%;
+            `;
+            
+            document.body.appendChild(tempMessage);
+            
+            setTimeout(() => {
+                if (tempMessage.parentNode) {
+                    document.body.removeChild(tempMessage);
+                }
+            }, 3000);
+        }
+
+        function resetGame() {
+            gameComplete = false;
+            
+            // Clear all corrals
+            document.querySelectorAll('.corral-animals').forEach(corral => {
+                corral.innerHTML = '';
+            });
+            
+            // Reset counters
+            document.querySelectorAll('.counter').forEach(counter => {
+                counter.textContent = '0';
+                counter.classList.remove('correct');
+            });
+            
+            // Generate corrals and animals for current level
+            generateCorrals();
+            setupDropZones();
+            generateAnimals();
+        }
+
+        function playSound(type) {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                if (type === 'victory') {
+                    // Victory melody
+                    [523, 659, 784, 1047, 1319].forEach((freq, i) => {
+                        setTimeout(() => {
+                            const osc = audioContext.createOscillator();
+                            const gain = audioContext.createGain();
+                            osc.connect(gain);
+                            gain.connect(audioContext.destination);
+                            osc.frequency.setValueAtTime(freq, audioContext.currentTime);
+                            gain.gain.setValueAtTime(0.1, audioContext.currentTime);
+                            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                            osc.start();
+                            osc.stop(audioContext.currentTime + 0.3);
+                        }, i * 150);
+                    });
+                    return;
+                }
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                let frequency, duration;
+                
+                switch(type) {
+                    case 'pickup':
+                        frequency = 440;
+                        duration = 0.1;
+                        break;
+                    case 'success':
+                        frequency = 880;
+                        duration = 0.2;
+                        break;
+                    case 'error':
+                        frequency = 220;
+                        duration = 0.3;
+                        break;
+                    case 'level-complete':
+                        frequency = 660;
+                        duration = 0.4;
+                        break;
+                    default:
+                        frequency = 440;
+                        duration = 0.1;
+                }
+                
+                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + duration);
+            } catch (error) {
+                // Silent fallback if audio context fails
+                console.log('Audio not available');
+            }
+        }
+
+        // Initialize game
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeLevelSelector();
+            updateLevelInfo();
+            updateProgress();
+            resetGame();
+        });
+    </script>
+</body>
+</html>
